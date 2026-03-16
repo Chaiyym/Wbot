@@ -1,0 +1,10 @@
+[project]
+name = "wbot"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.12"
+dependencies = [
+    "loguru>=0.7.3",
+    "orjson>=3.11.7",
+    "uiautomation>=2.0.29",
+]

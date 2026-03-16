@@ -1,0 +1,8 @@
+
+[WinError -2147221008] 尚未调用 CoInitialize。
+Can not load UIAutomationCore.dll.
+1, You may need to install Windows Update KB971513 if your OS is Windows XP, see https://github.com/yinkaisheng/WindowsUpdateKB971513ForIUIAutomation
+2, You need to use an UIAutomationInitializerInThread object if use uiautomation in a thread, see demos/uiautomation_in_thread.py
+2026-03-16 20:57:14.998 reprlib.py[192] repr_instance -> Find Control Timeout(10s): {Name: 'test', ControlType: WindowControl}
+2026-03-16 20:57:40.638 reprlib.py[192] repr_instance -> Find Control Timeout(10s): {Name: 'test.txt', ControlType: WindowControl}
+2026-03-16 21:38:07.658 uiautomation_demo.py[66] demo_write_to_notepad -> Find Control Timeout(10s): {Name: 'test.txt - 记事本', ControlType: WindowControl}
