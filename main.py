@@ -1,17 +1,43 @@
-# 这是一个示例 Python 脚本。
-import wechat_utils
+"""
+Wbot 入口文件
+"""
+from orjson import orjson
+
+from src.service import bot_service
+from src.service.bot_service import init_database, get_filtered_conversations, focus_session, click_session
+from src.wechat.wechat_core import get_wechat_window_control, get_session_control, get_session_list_control
 
 
-# 按 Shift+F10 执行或将其替换为您的代码。
-# 按 双击 Shift 在所有地方搜索类、文件、工具窗口、操作和设置。
+# 核心业务
+def execute_biz() -> str:
+    # 初始化数据库
+    init_database()
+    # 查找微信窗口
+    wechat = get_wechat_window_control()
+    # 获取会话控件
+    session_control = get_session_control(wechat)
+
+    # 获取过滤后的会话列表
+    target_sessions = get_filtered_conversations(session_control)
+    for session_item in target_sessions:
+        # session_item.GetChildren()
+        focus_session(session_item)
+        click_session(session_item)
+
+    result = {
+        # "whitelist": white,
+        # "blacklist": black,
+        # "unclassified": other,
+        "summary": {
+            "whitelist_count": len(white),
+            "blacklist_count": len(black),
+            "unclassified_count": len(other),
+            "total": len(white) + len(black) + len(other)
+        }
+    }
+
+    return orjson.dumps(result, option=orjson.OPT_INDENT_2).decode("utf-8")
 
 
-def print_hi(name):
-    # 在下面的代码行中使用断点来调试脚本。
-    print(f'Hi, {name}')  # 按 Ctrl+F8 切换断点。
-
-
-# 按装订区域中的绿色按钮以运行脚本。
 if __name__ == '__main__':
-    wechat_utils.get_conversation_items_detailed()
-
+    print(execute_biz())
