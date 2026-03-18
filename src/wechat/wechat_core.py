@@ -8,56 +8,46 @@ from typing import Optional, List
 
 import uiautomation as auto
 from loguru import logger
-from uiautomation import ListControl, WindowControl
+from uiautomation import ListControl, WindowControl, Control
 
-from src.wechat.dto.conversation_item import ConversationItem
+from src.wechat.dto.control_model import ConversationItem
+from src.wechat.dto.control_model import MessageItem
 
 WECHAT_WINDOW_NAME = "微信"
+WECHAT_SESSION_UI_ID = "session_list"
+WECHAT_CHAT_MESSAGE_UI_ID = "chat_message_list"
+WECHAT_CHAT_EDIT_UI_ID = "chat_input_field"
+WECHAT_CHAT_TOOL_BAR_UI_ID = "tool_bar_accessible"
 
 
-# 获取微信窗口控件
+def print_control_info(control: Control) -> bool:
+    if control.Exists(maxSearchSeconds=3):
+        logger.success(f"控件类型: {control.ControlTypeName}")
+        logger.success(f"控件名称: {control.Name}")
+        logger.success(f"AutomationId: {control.AutomationId}")
+        return True
+    logger.warning("未找到控件")
+    return False
+
+
+# 查找微信窗口控件
 def get_wechat_window_control() -> Optional[auto.WindowControl]:
-    """
-    查找微信窗口
-
-    Returns:
-        WindowControl 或 None
-    """
-    logger.info(f"查找微信窗口: {WECHAT_WINDOW_NAME}")
+    logger.info(f"查找微信窗口控件: {WECHAT_WINDOW_NAME}")
     wechat = auto.WindowControl(searchDepth=1, Name=WECHAT_WINDOW_NAME)
-
-    if wechat.Exists(maxSearchSeconds=3):
-        logger.success(f"找到微信窗口: {wechat.Name}")
+    if print_control_info(wechat):
         return wechat
-
-    logger.warning("未找到微信窗口")
     return None
 
 
-# 获取会话列表控件
+# 查找会话列表控件
 def get_session_control(wechat_window: WindowControl) -> Optional[auto.ListControl]:
-    """
-    查找会话列表控件
-
-    Args:
-        wechat_window: 微信窗口对象
-
-    Returns:
-        ListControl 或 None
-    """
+    if not wechat_window:
+        return None
 
     logger.debug("查找会话列表控件")
-    list_control = wechat_window.ButtonControl(Name="fa")
-    time.sleep(3)
-    target = auto.ControlFromCursor()
-    print(f"控件类型: {target.ControlTypeName}")
-    print(f"控件名称: {target.Name}")
-    print(f"AutomationId: {target.AutomationId}")
-    if list_control.Exists(maxSearchSeconds=2):
-        logger.success(f"找到会话列表: {list_control.Name}")
+    list_control = wechat_window.ListControl(AutomationId=WECHAT_SESSION_UI_ID)
+    if print_control_info(list_control):
         return list_control
-
-    logger.warning("未找到会话列表控件")
     return None
 
 
@@ -74,6 +64,7 @@ def get_session_list_control(session_control: ListControl) -> List[ConversationI
             # 构建 DTO 对象
             dto = ConversationItem(
                 index=i,
+                name=item.Name,
                 automation_id=item.AutomationId,
                 control_type=item.ControlTypeName,
                 process_id=item.ProcessId,
@@ -87,4 +78,43 @@ def get_session_list_control(session_control: ListControl) -> List[ConversationI
             result.append(dto)
 
     logger.success(f"共获取 {len(result)} 个会话")
+    return result
+
+
+# 查找消息列表控件
+def get_wechat_chat_message_control(wechat_window: WindowControl) -> Optional[auto.ListControl]:
+    logger.debug("查找消息列表控件")
+    message_list_control = wechat_window.ListControl(AutomationId=WECHAT_CHAT_MESSAGE_UI_ID)
+    if print_control_info(message_list_control):
+        return message_list_control
+    return None
+
+
+def get_message_list(message_list_control: ListControl) -> List[ConversationItem]:
+    if not message_list_control:
+        return []
+    items = message_list_control.GetChildren()
+    result = []
+
+    for i, item in enumerate(items):
+        # 构建 DTO 对象
+        try:
+            dto = MessageItem(
+                index=i,
+                name=item.Name,
+                automation_id=item.AutomationId,
+                control_type=item.ControlTypeName,
+                process_id=item.ProcessId,
+                is_focus=item.GetPropertyValue(auto.PropertyId.HasKeyboardFocusProperty),
+                is_selected=item.GetPropertyValue(auto.PropertyId.SelectionItemIsSelectedProperty),
+                is_enable=item.GetPropertyValue(auto.PropertyId.IsEnabledProperty),
+                is_offscreen=item.GetPropertyValue(auto.PropertyId.IsOffscreenProperty),
+                help=item.GetPropertyValue(auto.PropertyId.HelpTextProperty),
+                origin=item,
+            )
+        except Exception as e:
+            logger.warning(f"跳过第 {i} 个控件，原因: {e}")
+            continue
+        result.append(dto)
+    logger.success(f"共获取 {len(result)} 个消息")
     return result

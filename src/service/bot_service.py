@@ -17,7 +17,7 @@ from src.data import db
 from src.data import whitelist
 from src.data import blacklist
 from src.wechat import wechat_core
-from src.wechat.dto.conversation_item import ConversationItem
+from src.wechat.dto.control_model import ConversationItem
 from src.wechat.wechat_core import get_session_list_control
 
 automation_id_prefix = "session_item_"
@@ -125,5 +125,12 @@ def focus_session(session_item):
 
 def click_session(session_item):
     session_item.origin.Click()
+
+
+def read_message_by_focus(wechat:WindowControl)-> List[ConversationItem]:
+    message_list_control = wechat_core.get_wechat_chat_message_control(wechat)
+    messages= wechat_core.get_message_list(message_list_control)
+    #todo 过滤消息通过黑名单
+    return messages
 
 
